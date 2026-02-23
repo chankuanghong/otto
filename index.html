@@ -1,14 +1,1484 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Otto - Occupational Therapy Tracking</title>
+  <title>Otto - GitHub Single File</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #f8fafc;
+    }
+    .hide-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .hide-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
 </head>
 <body class="overflow-x-hidden">
   <div id="root"></div>
-  <script type="module" src="/src/main.tsx"></script>
+
+  <script src="https://unpkg.com/@babel/standalone@7.27.1/babel.min.js"></script>
+  <script id="app-tsx" type="text/plain">
+import React, { useState, useEffect, useCallback } from "https://esm.sh/react@19.2.4";
+import ReactDOM from "https://esm.sh/react-dom@19.2.4/client";
+import {
+  Home,
+  Building2,
+  ChevronRight,
+  Briefcase,
+  Baby,
+  BookOpen,
+  Heart,
+  CookingPot,
+  UserCircle,
+  CheckCircle2,
+  Brain,
+  Zap,
+  Trash2,
+  X,
+  PlusCircle,
+  ChevronLeft,
+  ArrowRight,
+  Save,
+  Clock,
+  Minus,
+  Plus,
+  Info,
+  Moon,
+  TrendingUp,
+  Trophy,
+  Star,
+  MapPin,
+  Grid,
+  Check,
+  Search,
+  Timer,
+  Layers,
+  RotateCcw,
+  PlayCircle,
+  Calendar,
+  BarChart3,
+  Target,
+  Award
+} from "https://esm.sh/lucide-react@0.575.0";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  Tooltip,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  BarChart,
+  Bar
+} from "https://esm.sh/recharts@3.7.0";
+
+enum AppMode {
+  INPATIENT = 'INPATIENT',
+  OUTPATIENT = 'OUTPATIENT'
+}
+enum UserRole {
+  WORKER = 'Worker',
+  GRANDPARENT = 'Grandparent',
+  STUDENT = 'Student',
+  HOMEMAKER = 'Homemaker',
+  CAREGIVER = 'Caregiver',
+  RECOVERY = 'Person in Recovery'
+}
+interface Activity {
+  id: string;
+  name: string;
+  type: 'Cognitive' | 'Regulation' | 'Leisure' | 'ADL' | 'Productivity' | 'Sleep';
+  startTime: number; 
+  duration: number; 
+  description: string;
+  isCompleted?: boolean;
+  isStarted?: boolean;
+  selectedHobby?: string;
+  subType?: string;
+  rating?: number; // 1-5 Likert scale
+}
+interface HistoryPoint {
+  date: string;
+  value: number;
+}
+interface TherapyStats {
+  memoryBestLevel: number;
+  memoryHistory: HistoryPoint[];
+  processingBestCount: number;
+  processingHistory: HistoryPoint[];
+  towerBestScore: number | null; // Moves efficiency
+  towerHistory: HistoryPoint[];
+  breathingSessions: number;
+  breathingHistory: HistoryPoint[];
+  hobbiesExplored: number;
+  streak: number;
+}
+interface MOHOState {
+  name: string;
+  roles: UserRole[];
+  mode: AppMode;
+  onboardingComplete: boolean;
+}
+interface HobbyItem {
+  name: string;
+  isOutdoor: boolean;
+  description: string;
+}
+interface LeisureCategory {
+  name: string;
+  items: HobbyItem[];
+}
+
+
+
+const LEISURE_CHECKLIST: LeisureCategory[] = [
+  {
+    name: "Personal, Social & Spiritual",
+    items: [
+      { name: "Meditation", isOutdoor: false, description: "Mindful breathing and stillness." },
+      { name: "Prayer", isOutdoor: false, description: "Spiritual connection and reflection." },
+      { name: "Journal writing", isOutdoor: false, description: "Recording thoughts and daily events." },
+      { name: "Pet care", isOutdoor: false, description: "Feeding and grooming your companion." },
+      { name: "Social media", isOutdoor: false, description: "Connecting with friends online." },
+      { name: "Voluntary work", isOutdoor: true, description: "Helping out in the community." }
+    ]
+  },
+  {
+    name: "Arts, Crafts & Skills",
+    items: [
+      { name: "Knitting/crochet", isOutdoor: false, description: "Creating textiles with yarn." },
+      { name: "Making music", isOutdoor: false, description: "Playing an instrument or singing." },
+      { name: "Painting/drawing", isOutdoor: false, description: "Visual expression through art." },
+      { name: "Cooking/baking", isOutdoor: false, description: "Preparing meals or treats." },
+      { name: "Gardening/floristry", isOutdoor: true, description: "Working with plants and flowers." },
+      { name: "Puzzles/board games", isOutdoor: false, description: "Logical challenges and fun." },
+      { name: "Listening to music", isOutdoor: false, description: "Auditory relaxation." }
+    ]
+  },
+  {
+    name: "Sports",
+    items: [
+      { name: "Running/jogging", isOutdoor: true, description: "Cardiovascular exercise outdoors." },
+      { name: "Cycling", isOutdoor: true, description: "Riding a bicycle for fitness." },
+      { name: "Gym/weight training", isOutdoor: false, description: "Strength building in a facility." },
+      { name: "Yoga/Pilates", isOutdoor: false, description: "Flexibility and core strength." },
+      { name: "Swimming", isOutdoor: true, description: "Full body workout in water." }
+    ]
+  },
+  {
+    name: "Outdoor",
+    items: [
+      { name: "Walking/hiking", isOutdoor: true, description: "Exploring trails and nature." },
+      { name: "Camping", isOutdoor: true, description: "Staying overnight in nature." },
+      { name: "Bird watching", isOutdoor: true, description: "Observing local wildlife." },
+      { name: "Places of natural beauty", isOutdoor: true, description: "Visiting parks or reservoirs." }
+    ]
+  },
+  {
+    name: "Out and About",
+    items: [
+      { name: "Cinema", isOutdoor: false, description: "Watching movies on the big screen." },
+      { name: "Dining out", isOutdoor: false, description: "Eating at cafes or hawkers." },
+      { name: "Museums/Exhibitions", isOutdoor: false, description: "Learning about history and art." },
+      { name: "Shopping", isOutdoor: false, description: "Browsing markets or malls." }
+    ]
+  }
+];
+const ROLE_SUGGESTIONS: Record<UserRole, string[]> = {
+  [UserRole.WORKER]: ["Ergonomic Check", "Work-Life Integration", "Time Management"],
+  [UserRole.GRANDPARENT]: ["Intergenerational Play", "Memory Sharing", "Gentle Exercise"],
+  [UserRole.STUDENT]: ["Study Routine", "Cognitive Breaks", "Social Interaction"],
+  [UserRole.HOMEMAKER]: ["Meal Prep Flow", "Home Safety Audit", "Community Connection"],
+  [UserRole.CAREGIVER]: ["Self-Care Respite", "Support Network", "Stamina Building"],
+  [UserRole.RECOVERY]: ["Routine Building", "Energy Conservation", "Social Participation"]
+};
+
+const DEFAULT_STATS: TherapyStats = {
+  memoryBestLevel: 2,
+  memoryHistory: [
+    { date: '1', value: 2 }, { date: '2', value: 3 }, { date: '3', value: 4 }
+  ],
+  processingBestCount: 0,
+  processingHistory: [],
+  towerBestScore: null,
+  towerHistory: [],
+  breathingSessions: 0,
+  breathingHistory: [
+    { date: 'Mon', value: 2 }, { date: 'Tue', value: 1 }, { date: 'Wed', value: 3 }
+  ],
+  hobbiesExplored: 0,
+  streak: 1
+};
+
+type PersistedState = {
+  userState: MOHOState | null;
+  activities: Activity[];
+  stats: TherapyStats;
+};
+
+const DB_NAME = 'otto_app_db';
+const DB_VERSION = 1;
+const DB_STORE = 'app_state';
+const DB_KEY = 'main';
+
+const openDb = (): Promise<IDBDatabase> => {
+  return new Promise((resolve, reject) => {
+    if (!('indexedDB' in window)) {
+      reject(new Error('IndexedDB is not supported in this browser.'));
+      return;
+    }
+
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains(DB_STORE)) {
+        db.createObjectStore(DB_STORE);
+      }
+    };
+
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error ?? new Error('Failed to open IndexedDB.'));
+  });
+};
+
+const loadPersistedState = async (): Promise<PersistedState | null> => {
+  try {
+    const db = await openDb();
+
+    const data = await new Promise<PersistedState | null>((resolve, reject) => {
+      const tx = db.transaction(DB_STORE, 'readonly');
+      const store = tx.objectStore(DB_STORE);
+      const request = store.get(DB_KEY);
+
+      request.onsuccess = () => {
+        const value = request.result;
+        resolve(value ?? null);
+      };
+      request.onerror = () => reject(request.error ?? new Error('Failed to read IndexedDB.'));
+    });
+
+    db.close();
+    return data;
+  } catch (error) {
+    console.warn('State load skipped:', error);
+    return null;
+  }
+};
+
+const savePersistedState = async (state: PersistedState): Promise<void> => {
+  try {
+    const db = await openDb();
+
+    await new Promise<void>((resolve, reject) => {
+      const tx = db.transaction(DB_STORE, 'readwrite');
+      const store = tx.objectStore(DB_STORE);
+      store.put(state, DB_KEY);
+
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error ?? new Error('Failed to write IndexedDB.'));
+    });
+
+    db.close();
+  } catch (error) {
+    console.warn('State save skipped:', error);
+  }
+};
+
+
+
+interface MOHOOnboardingProps {
+  onComplete: (data: MOHOState) => void;
+}
+
+const MOHOOnboarding: React.FC<MOHOOnboardingProps> = ({ onComplete }) => {
+  const [step, setStep] = useState(1);
+  const [name, setName] = useState('');
+  const [selectedRoles, setSelectedRoles] = useState<UserRole[]>([]);
+  const [mode, setMode] = useState<AppMode>(AppMode.OUTPATIENT);
+
+  const roles = [
+    { id: UserRole.RECOVERY, icon: <UserCircle className="w-6 h-6" />, label: "Person in Recovery" },
+    { id: UserRole.WORKER, icon: <Briefcase className="w-6 h-6" />, label: "Worker" },
+    { id: UserRole.GRANDPARENT, icon: <Baby className="w-6 h-6" />, label: "Grandparent" },
+    { id: UserRole.STUDENT, icon: <BookOpen className="w-6 h-6" />, label: "Student" },
+    { id: UserRole.HOMEMAKER, icon: <CookingPot className="w-6 h-6" />, label: "Homemaker" },
+    { id: UserRole.CAREGIVER, icon: <Heart className="w-6 h-6" />, label: "Caregiver" },
+  ];
+
+  const toggleRole = (role: UserRole) => {
+    setSelectedRoles(prev => 
+      prev.includes(role) ? prev.filter(r => r !== role) : [...prev, role]
+    );
+  };
+
+  const handleNext = () => {
+    if (step < 3) setStep(step + 1);
+    else onComplete({ name, roles: selectedRoles, mode, onboardingComplete: true });
+  };
+
+  return (
+    <div className="min-h-screen bg-white flex flex-col p-6 max-w-md mx-auto">
+      <div className="mt-12 mb-8">
+        <div className="flex gap-2 mb-4">
+          {[1, 2, 3].map(i => (
+            <div key={i} className={`h-1.5 flex-1 rounded-full ${step >= i ? 'bg-indigo-600' : 'bg-gray-100'}`} />
+          ))}
+        </div>
+        <h1 className="text-3xl font-bold text-gray-900">
+          {step === 1 && "Welcome to Otto"}
+          {step === 2 && "What are your roles?"}
+          {step === 3 && "Current Setting"}
+        </h1>
+        <p className="text-gray-500 mt-2">
+          {step === 1 && "Let's personalize your recovery journey."}
+          {step === 2 && "Select all roles that apply to you."}
+          {step === 3 && "Are you still in hospital or back at home?"}
+        </p>
+      </div>
+
+      <div className="flex-1">
+        {step === 1 && (
+          <div className="space-y-4">
+            <label className="block">
+              <span className="text-sm font-medium text-gray-700">What should we call you?</span>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Enter your name"
+                className="mt-1 block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 transition-all outline-none"
+              />
+            </label>
+          </div>
+        )}
+
+        {step === 2 && (
+          <div className="grid grid-cols-1 gap-3 overflow-y-auto max-h-[50vh] pr-2 hide-scrollbar">
+            {roles.map(r => {
+              const isSelected = selectedRoles.includes(r.id);
+              return (
+                <button
+                  key={r.id}
+                  onClick={() => toggleRole(r.id)}
+                  className={`flex items-center gap-4 p-4 rounded-xl border-2 transition-all text-left ${
+                    isSelected ? 'border-indigo-600 bg-indigo-50 text-indigo-700' : 'border-gray-100 text-gray-600'
+                  }`}
+                >
+                  <div className={`${isSelected ? 'text-indigo-600' : 'text-gray-400'}`}>{r.icon}</div>
+                  <span className="font-semibold flex-1">{r.label}</span>
+                  {isSelected && <CheckCircle2 className="w-5 h-5 text-indigo-600" />}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {step === 3 && (
+          <div className="space-y-4">
+            <button
+              onClick={() => setMode(AppMode.INPATIENT)}
+              className={`w-full flex items-center justify-between p-6 rounded-2xl border-2 transition-all ${
+                mode === AppMode.INPATIENT ? 'border-indigo-600 bg-indigo-50' : 'border-gray-100'
+              }`}
+            >
+              <div className="flex items-center gap-4 text-left">
+                <div className="p-3 bg-white rounded-lg shadow-sm"><Building2 className="w-6 h-6 text-indigo-600" /></div>
+                <div>
+                  <h3 className="font-bold text-gray-900">Inpatient</h3>
+                  <p className="text-sm text-gray-500">I am currently in the hospital.</p>
+                </div>
+              </div>
+            </button>
+            <button
+              onClick={() => setMode(AppMode.OUTPATIENT)}
+              className={`w-full flex items-center justify-between p-6 rounded-2xl border-2 transition-all ${
+                mode === AppMode.OUTPATIENT ? 'border-indigo-600 bg-indigo-50' : 'border-gray-100'
+              }`}
+            >
+              <div className="flex items-center gap-4 text-left">
+                <div className="p-3 bg-white rounded-lg shadow-sm"><Home className="w-6 h-6 text-indigo-600" /></div>
+                <div>
+                  <h3 className="font-bold text-gray-900">Outpatient</h3>
+                  <p className="text-sm text-gray-500">I am recovering at home.</p>
+                </div>
+              </div>
+            </button>
+          </div>
+        )}
+      </div>
+
+      <button
+        disabled={(step === 1 && !name.trim()) || (step === 2 && selectedRoles.length === 0)}
+        onClick={handleNext}
+        className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-2 disabled:opacity-50 mt-8 shadow-lg shadow-indigo-100"
+      >
+        {step === 3 ? 'Start My Journey' : 'Next Step'}
+        <ChevronRight className="w-5 h-5" />
+      </button>
+    </div>
+  );
+};
+
+
+
+interface HabituationWheelProps {
+  activities: Activity[];
+  onHourClick: (hour: number) => void;
+}
+
+const HabituationWheel: React.FC<HabituationWheelProps> = ({ activities, onHourClick }) => {
+  const now = new Date();
+  const currentDecimalHour = now.getHours() + (now.getMinutes() >= 30 ? 0.5 : 0);
+
+  const data = Array.from({ length: 24 }).map((_, i) => {
+    const activity = activities.find(a => Math.floor(a.startTime) === i);
+    return {
+      hour: i,
+      value: 1,
+      name: activity ? activity.name : 'Free Time',
+      type: activity ? activity.type : 'Empty',
+      isCurrent: i === Math.floor(currentDecimalHour)
+    };
+  });
+
+  const COLORS: Record<string, string> = {
+    'Cognitive': '#6366f1',
+    'Regulation': '#ec4899',
+    'Leisure': '#10b981',
+    'ADL': '#f59e0b',
+    'Productivity': '#8b5cf6',
+    'Sleep': '#3b82f6',
+    'Empty': '#f1f5f9',
+  };
+
+  const getHourLabel = (h: number) => {
+    if (h === 0 || h === 24) return '12am';
+    if (h === 12) return '12pm';
+    return h > 12 ? `${h - 12}pm` : `${h}am`;
+  };
+
+  return (
+    <div className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-gray-100 mb-8 overflow-hidden">
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <Clock className="w-5 h-5 text-indigo-600" />
+          <h2 className="text-xl font-bold text-gray-800">Habituation Wheel</h2>
+        </div>
+        <div className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full uppercase tracking-widest">
+          {getHourLabel(now.getHours())} {now.getMinutes() < 30 ? ':00' : ':30'}
+        </div>
+      </div>
+
+      <div className="h-[360px] w-full relative">
+        <div className="absolute top-2 left-1/2 -translate-x-1/2 text-[10px] font-bold text-gray-400">12 AM</div>
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-[10px] font-bold text-gray-400">12 PM</div>
+        <div className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-400 text-right pr-2">6 PM</div>
+        <div className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-400 text-left pl-2">6 AM</div>
+
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={data}
+              cx="50%"
+              cy="50%"
+              innerRadius={90}
+              outerRadius={145} // Extended radially
+              paddingAngle={1}
+              dataKey="value"
+              stroke="#fff"
+              strokeWidth={3}
+              startAngle={90}
+              endAngle={-270}
+              onClick={(entry) => onHourClick(entry.hour)}
+            >
+              {data.map((entry, index) => (
+                <Cell 
+                  key={`cell-${index}`} 
+                  fill={COLORS[entry.type]} 
+                  stroke={entry.isCurrent ? '#4f46e5' : '#fff'}
+                  strokeWidth={entry.isCurrent ? 5 : 2}
+                  className="cursor-pointer hover:opacity-80 transition-all outline-none"
+                />
+              ))}
+            </Pie>
+            <Tooltip 
+              contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' }}
+              formatter={(value, name, props) => [props.payload.name, getHourLabel(props.payload.hour)]}
+            />
+          </PieChart>
+        </ResponsiveContainer>
+        
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+          <div className="bg-white/80 backdrop-blur-sm rounded-full w-32 h-32 flex flex-col items-center justify-center border border-gray-100 shadow-inner">
+             <span className="text-4xl font-black text-gray-900 leading-none">
+               {activities.length}
+             </span>
+             <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">Events</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
+
+interface CognitiveGameProps {
+  stats: TherapyStats;
+  onBack: () => void;
+  onComplete: (type: 'memory' | 'processing' | 'tower', score: number) => void;
+}
+
+const BALL_COLORS = ['bg-red-500', 'bg-blue-500', 'bg-emerald-500'];
+
+const CognitiveGame: React.FC<CognitiveGameProps> = ({ stats, onBack, onComplete }) => {
+  const [gameMode, setGameMode] = useState<'menu' | 'spatial' | 'processing' | 'tower'>('menu');
+  
+  // Spatial Memory
+  const [level, setLevel] = useState(2);
+  const [lives, setLives] = useState(3);
+  const [consecutiveCorrect, setConsecutiveCorrect] = useState(0);
+  const [grid, setGrid] = useState<number[]>([]);
+  const [playerSelection, setPlayerSelection] = useState<number[]>([]);
+  const [gameState, setGameState] = useState<'showing' | 'playing' | 'feedback'>('showing');
+  const [isCorrect, setIsCorrect] = useState(true);
+
+  // Processing Speed
+  const [procLevel, setProcLevel] = useState(1);
+  const [procConsecutive, setProcConsecutive] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(60);
+  const [oddOneIndex, setOddOneIndex] = useState(-1);
+  const [emojis, setEmojis] = useState<string[]>([]);
+  const [foundCount, setFoundCount] = useState(0);
+
+  // Tower of London
+  const [pegs, setPegs] = useState<number[][]>([[0, 1, 2], [], []]);
+  const [goalPegs, setGoalPegs] = useState<number[][]>([[], [0], [1, 2]]);
+  const [selectedPeg, setSelectedPeg] = useState<number | null>(null);
+  const [moves, setMoves] = useState(0);
+  const [towerComplete, setTowerComplete] = useState(false);
+
+  const startSpatial = useCallback(() => {
+    if (lives <= 0) return setGameMode('menu');
+    setGameState('showing');
+    const newGrid: number[] = [];
+    while (newGrid.length < level) {
+      const rand = Math.floor(Math.random() * 25);
+      if (!newGrid.includes(rand)) newGrid.push(rand);
+    }
+    setGrid(newGrid);
+    setPlayerSelection([]);
+    setTimeout(() => setGameState('playing'), 1000 + (level * 200));
+  }, [level, lives]);
+
+  const handleTileClick = (index: number) => {
+    if (gameState !== 'playing' || playerSelection.includes(index)) return;
+    const newSelection = [...playerSelection, index];
+    setPlayerSelection(newSelection);
+    if (!grid.includes(index)) {
+      setIsCorrect(false); setGameState('feedback'); setLives(l => l - 1); setConsecutiveCorrect(0);
+      setTimeout(() => startSpatial(), 1500);
+      return;
+    }
+    if (newSelection.length === grid.length) {
+      setIsCorrect(true); setGameState('feedback');
+      const nextC = consecutiveCorrect + 1;
+      setConsecutiveCorrect(nextC);
+      if (nextC >= 5) { setLevel(l => l + 1); setConsecutiveCorrect(0); }
+      onComplete('memory', level);
+      setTimeout(() => startSpatial(), 1000);
+    }
+  };
+
+  const startProcessing = useCallback(() => {
+    const pairs = [
+      ['\uD83C\uDF4E', '\uD83C\uDF4F'], // 🍎 / 🍏
+      ['\uD83D\uDC31', '\uD83D\uDC36'], // 🐱 / 🐶
+      ['\uD83D\uDE00', '\uD83D\uDE01'], // 😀 / 😁
+      ['\uD83C\uDFE0', '\uD83C\uDFE8']  // 🏠 / 🏨
+    ];
+    const pair = pairs[Math.floor(Math.random() * pairs.length)];
+    const side = procLevel === 1 ? 3 : procLevel === 2 ? 4 : 5;
+    const size = side * side;
+    const newEmojis = Array(size).fill(pair[0]);
+    const randIdx = Math.floor(Math.random() * size);
+    newEmojis[randIdx] = pair[1];
+    setEmojis(newEmojis);
+    setOddOneIndex(randIdx);
+  }, [procLevel]);
+
+  const handleProcClick = (idx: number) => {
+    if (idx === oddOneIndex) {
+      setFoundCount(f => f + 1);
+      const nextC = procConsecutive + 1;
+      if (nextC >= 5 && procLevel < 3) { setProcLevel(l => l + 1); setProcConsecutive(0); }
+      else setProcConsecutive(nextC);
+      startProcessing();
+    } else {
+      setProcConsecutive(0);
+      startProcessing();
+    }
+  };
+
+  const handleTowerPeg = (idx: number) => {
+    if (towerComplete) return;
+    if (selectedPeg === null) {
+      if (pegs[idx].length > 0) setSelectedPeg(idx);
+    } else {
+      if (selectedPeg === idx) { setSelectedPeg(null); return; }
+      const capacity = idx === 0 ? 3 : idx === 1 ? 2 : 1;
+      if (pegs[idx].length < capacity) {
+        const newPegs = pegs.map(p => [...p]);
+        const ball = newPegs[selectedPeg].pop();
+        if (ball !== undefined) {
+          newPegs[idx].push(ball);
+          setPegs(newPegs);
+          setMoves(m => m + 1);
+          if (JSON.stringify(newPegs) === JSON.stringify(goalPegs)) {
+            setTowerComplete(true);
+            onComplete('tower', moves + 1);
+          }
+        }
+      }
+      setSelectedPeg(null);
+    }
+  };
+
+  useEffect(() => {
+    if (gameMode === 'spatial') startSpatial();
+    if (gameMode === 'processing') {
+      startProcessing();
+      const t = setInterval(() => setTimeLeft(prev => prev > 0 ? prev - 1 : 0), 1000);
+      return () => clearInterval(t);
+    }
+  }, [gameMode]);
+
+  return (
+    <div className="min-h-screen bg-white flex flex-col max-w-md mx-auto">
+      <header className="p-6 flex items-center justify-between border-b border-gray-100 sticky top-0 bg-white z-10">
+        <button onClick={gameMode === 'menu' ? onBack : () => setGameMode('menu')} className="p-2 hover:bg-slate-50 rounded-full">
+          <ChevronLeft />
+        </button>
+        <h2 className="text-xl font-bold text-gray-900">Cognitive Gym</h2>
+        <div className="w-10" />
+      </header>
+
+      <main className="flex-1 p-6 flex flex-col items-center justify-center">
+        {gameMode === 'menu' && (
+          <div className="w-full space-y-4">
+            <button onClick={() => setGameMode('spatial')} className="w-full p-6 bg-indigo-50 rounded-3xl text-left flex items-center gap-4">
+              <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center text-white"><Brain /></div>
+              <div className="flex-1">
+                <div className="flex justify-between items-center"><h3 className="font-bold">Spatial Span</h3><span className="text-[10px] opacity-50 font-bold uppercase">Best: Lvl {stats.memoryBestLevel}</span></div>
+                <p className="text-xs text-indigo-600/60">Memory grid with 3 lives.</p>
+              </div>
+            </button>
+            <button onClick={() => setGameMode('processing')} className="w-full p-6 bg-emerald-50 rounded-3xl text-left flex items-center gap-4">
+              <div className="w-12 h-12 bg-emerald-600 rounded-2xl flex items-center justify-center text-white"><Search /></div>
+              <div className="flex-1">
+                <div className="flex justify-between items-center"><h3 className="font-bold">Odd One Out</h3><span className="text-[10px] opacity-50 font-bold uppercase">Best: {stats.processingBestCount}</span></div>
+                <p className="text-xs text-emerald-600/60">Speed and scanning challenge.</p>
+              </div>
+            </button>
+            <button onClick={() => setGameMode('tower')} className="w-full p-6 bg-amber-50 rounded-3xl text-left flex items-center gap-4">
+              <div className="w-12 h-12 bg-amber-600 rounded-2xl flex items-center justify-center text-white"><Layers /></div>
+              <div className="flex-1">
+                <div className="flex justify-between items-center"><h3 className="font-bold">Tower of London</h3><span className="text-[10px] opacity-50 font-bold uppercase">Executive</span></div>
+                <p className="text-xs text-amber-600/60">Planning and reasoning.</p>
+              </div>
+            </button>
+          </div>
+        )}
+
+        {gameMode === 'spatial' && (
+          <div className="w-full text-center">
+            <div className="flex justify-between mb-8 items-center">
+              <div className="flex gap-1">{[...Array(3)].map((_, i) => <Heart key={i} size={18} className={i < lives ? "fill-red-500 text-red-500" : "text-slate-200"} />)}</div>
+              <div className="bg-indigo-50 px-4 py-1 rounded-full text-indigo-600 font-bold text-xs">Lvl {level} | {consecutiveCorrect}/5</div>
+            </div>
+            <div className="grid grid-cols-5 gap-2 w-full aspect-square bg-slate-50 p-4 rounded-[2.5rem]">
+              {[...Array(25)].map((_, i) => (
+                <button key={i} onClick={() => handleTileClick(i)} className={`rounded-xl transition-all ${gameState === 'showing' && grid.includes(i) ? 'bg-indigo-400 scale-95' : gameState === 'playing' && playerSelection.includes(i) ? 'bg-indigo-600' : gameState === 'feedback' && grid.includes(i) ? (isCorrect ? 'bg-emerald-400' : 'bg-red-400') : 'bg-white border border-slate-100'}`} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {gameMode === 'processing' && (
+          <div className="w-full text-center">
+            <div className="flex justify-between mb-8 items-center">
+              <div className="bg-pink-50 px-4 py-1 rounded-full text-pink-600 font-bold text-xs"><Timer className="inline mr-1" size={14}/> {timeLeft}s</div>
+              <div className="bg-emerald-50 px-4 py-1 rounded-full text-emerald-600 font-bold text-xs">Found: {foundCount}</div>
+            </div>
+            <div className={`grid gap-4 bg-slate-50 p-6 rounded-[2.5rem] ${procLevel === 1 ? 'grid-cols-3' : procLevel === 2 ? 'grid-cols-4' : 'grid-cols-5'}`}>
+              {emojis.map((e, i) => <button key={i} onClick={() => handleProcClick(i)} className="text-4xl aspect-square flex items-center justify-center hover:scale-110 active:scale-95 transition-all">{e}</button>)}
+            </div>
+          </div>
+        )}
+
+        {gameMode === 'tower' && (
+          <div className="w-full flex flex-col items-center">
+            <div className="flex justify-between w-full mb-8">
+              <div className="text-left"><p className="text-[10px] font-bold text-slate-400 uppercase">Moves</p><p className="text-2xl font-black text-slate-900">{moves}</p></div>
+              <button onClick={() => { setPegs([[0, 1, 2], [], []]); setMoves(0); setTowerComplete(false); }} className="p-3 bg-slate-100 rounded-2xl text-slate-400"><RotateCcw size={18}/></button>
+            </div>
+            <div className="flex justify-around items-end w-full h-48 bg-slate-50 rounded-[2.5rem] border border-slate-100 relative mb-8">
+              {pegs.map((peg, i) => (
+                <button key={i} onClick={() => handleTowerPeg(i)} className={`relative flex flex-col-reverse items-center gap-1.5 w-20 pb-4 h-full ${selectedPeg === i ? 'bg-indigo-50/50' : ''}`}>
+                  <div className={`w-2 rounded-t-full bg-slate-300 absolute bottom-0 ${i === 0 ? 'h-32' : i === 1 ? 'h-24' : 'h-16'} ${selectedPeg === i ? 'bg-indigo-400' : ''}`} />
+                  <div className="flex flex-col-reverse gap-1.5 z-10">
+                    {/* Fixed BALL_COLOR to BALL_COLORS on line 205 */}
+                    {peg.map((ball, bIdx) => <div key={bIdx} className={`w-12 h-6 rounded-full shadow-lg ${BALL_COLORS[ball]}`} />)}
+                  </div>
+                </button>
+              ))}
+            </div>
+            {towerComplete && <div className="text-emerald-600 font-bold animate-bounce flex items-center gap-2"><PlayCircle size={20}/> Goal Achieved!</div>}
+          </div>
+        )}
+      </main>
+    </div>
+  );
+};
+
+
+
+interface LeisureSwiperProps {
+  mode: AppMode;
+  onBack: () => void;
+  onSelectHobby: (hobby: string) => void;
+}
+
+const LeisureSwiper: React.FC<LeisureSwiperProps> = ({ mode, onBack, onSelectHobby }) => {
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
+  // Filter categories and items based on mode
+  const filteredChecklist = LEISURE_CHECKLIST.map(cat => ({
+    ...cat,
+    items: cat.items.filter(item => mode === AppMode.OUTPATIENT || !item.isOutdoor)
+  })).filter(cat => cat.items.length > 0);
+
+  if (selectedCategory) {
+    const category = filteredChecklist.find(c => c.name === selectedCategory);
+    return (
+      <div className="bg-slate-50 min-h-screen flex flex-col max-w-md mx-auto">
+        <header className="p-6 flex items-center justify-between bg-white border-b border-gray-100 sticky top-0 z-10">
+          <button onClick={() => setSelectedCategory(null)} className="p-2 hover:bg-slate-50 rounded-full">
+            <ChevronLeft className="w-6 h-6 text-gray-600" />
+          </button>
+          <h2 className="text-lg font-bold text-gray-900">{selectedCategory}</h2>
+          <div className="w-10" />
+        </header>
+
+        <main className="flex-1 p-6 space-y-4 overflow-y-auto hide-scrollbar">
+          {category?.items.map((item, idx) => (
+            <button
+              key={idx}
+              onClick={() => onSelectHobby(item.name)}
+              className="w-full bg-white p-5 rounded-3xl border border-gray-100 shadow-sm flex items-center justify-between hover:border-emerald-200 transition-all active:scale-95 text-left group"
+            >
+              <div className="flex-1 pr-4">
+                <h3 className="font-bold text-gray-900 mb-1">{item.name}</h3>
+                <p className="text-xs text-gray-400 line-clamp-2">{item.description}</p>
+                <div className="mt-2">
+                   <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded ${item.isOutdoor ? 'bg-orange-50 text-orange-600' : 'bg-blue-50 text-blue-600'}`}>
+                    {item.isOutdoor ? 'Outdoor' : 'Indoor'}
+                   </span>
+                </div>
+              </div>
+              <div className="w-10 h-10 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                <Plus size={20} />
+              </div>
+            </button>
+          ))}
+        </main>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-slate-50 min-h-screen flex flex-col max-w-md mx-auto">
+      <header className="p-6 flex items-center justify-between bg-white border-b border-gray-100 sticky top-0 z-10">
+        <button onClick={onBack} className="p-2 hover:bg-slate-50 rounded-full">
+          <ChevronLeft className="w-6 h-6 text-gray-600" />
+        </button>
+        <h2 className="text-lg font-bold text-gray-900">Interest Explorer</h2>
+        <div className="w-10" />
+      </header>
+
+      <main className="flex-1 p-6 space-y-4 overflow-y-auto hide-scrollbar">
+        <div className="bg-emerald-900 rounded-[2.5rem] p-8 text-white relative overflow-hidden mb-6">
+           <Heart className="absolute -bottom-4 -right-4 w-32 h-32 text-emerald-800 opacity-30" />
+           <p className="text-emerald-300 text-[10px] font-bold uppercase tracking-widest mb-1">Volition & Interest</p>
+           <h3 className="text-2xl font-black mb-4">What brings you joy today?</h3>
+           <p className="text-sm text-emerald-100 leading-relaxed opacity-80">
+             {mode === AppMode.INPATIENT 
+               ? "Since you're in the hospital, we've filtered for indoor-appropriate activities."
+               : "Explore a wide variety of indoor and outdoor hobbies around Singapore."}
+           </p>
+        </div>
+
+        <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 px-2">Categories</h3>
+        <div className="grid grid-cols-1 gap-3 pb-8">
+          {filteredChecklist.map((cat, idx) => (
+            <button
+              key={idx}
+              onClick={() => setSelectedCategory(cat.name)}
+              className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex items-center justify-between hover:bg-slate-50 transition-all active:scale-95"
+            >
+              <div>
+                <h4 className="font-bold text-gray-900">{cat.name}</h4>
+                <p className="text-xs text-gray-400 mt-0.5">{cat.items.length} options available</p>
+              </div>
+              <Plus className="text-emerald-600" size={20} />
+            </button>
+          ))}
+        </div>
+      </main>
+    </div>
+  );
+};
+
+
+
+interface TherapyHubProps {
+  stats: TherapyStats;
+  activities: Activity[];
+  onBack: () => void;
+  onRateActivity: (id: string, rating: number) => void;
+}
+
+const TherapyHub: React.FC<TherapyHubProps> = ({ stats, activities, onBack, onRateActivity }) => {
+  const [activeTab, setActiveTab] = useState<'summary' | 'cognition' | 'regulation' | 'leisure'>('summary');
+
+  const leisureActivities = activities.filter(a => a.type === 'Leisure' && a.isCompleted);
+
+  const milestones = [
+    { label: 'Routine Master', goal: '7 Day Streak', current: stats.streak, target: 7, color: 'bg-indigo-600' },
+    { label: 'Calm Pioneer', goal: '10 Regulation Rounds', current: stats.breathingSessions, target: 10, color: 'bg-pink-600' },
+    { label: 'Cognitive Giant', goal: 'Level 8 Grid Memory', current: stats.memoryBestLevel, target: 8, color: 'bg-emerald-600' },
+  ];
+
+  return (
+    <div className="min-h-screen bg-slate-50 flex flex-col max-w-md mx-auto overflow-hidden">
+      <header className="px-6 pt-10 pb-6 bg-white border-b border-gray-100 flex items-center justify-between">
+        <button onClick={onBack} className="p-2 hover:bg-slate-50 rounded-full transition-colors">
+          <ChevronLeft className="w-6 h-6 text-gray-600" />
+        </button>
+        <h1 className="text-xl font-bold text-gray-900">Therapy Analytics</h1>
+        <div className="w-10" />
+      </header>
+
+      <div className="flex bg-white px-4 py-2 gap-1 overflow-x-auto hide-scrollbar sticky top-0 z-10 border-b border-gray-50">
+        {(['summary', 'cognition', 'regulation', 'leisure'] as const).map(tab => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`flex-1 py-3 px-4 rounded-2xl text-xs font-bold capitalize transition-all whitespace-nowrap ${
+              activeTab === tab ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' : 'text-gray-400 hover:text-gray-600'
+            }`}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+
+      <main className="flex-1 overflow-y-auto p-6 space-y-8 pb-12 hide-scrollbar">
+        {activeTab === 'summary' && (
+          <>
+            {/* Objective Milestones */}
+            <section className="space-y-4">
+              <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                <Target className="w-5 h-5 text-indigo-600" /> Key Milestones
+              </h3>
+              {milestones.map((m, i) => (
+                <div key={i} className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <h4 className="font-bold text-gray-900">{m.label}</h4>
+                      <p className="text-xs text-gray-400">{m.goal}</p>
+                    </div>
+                    <Award className={`w-6 h-6 ${m.current >= m.target ? 'text-amber-500' : 'text-slate-200'}`} />
+                  </div>
+                  <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                    <div 
+                      className={`h-full ${m.color} transition-all duration-1000`} 
+                      style={{ width: `${Math.min(100, (m.current / m.target) * 100)}%` }} 
+                    />
+                  </div>
+                  <div className="flex justify-between mt-2 text-[10px] font-bold text-gray-400 uppercase">
+                    <span>{m.current} / {m.target}</span>
+                    <span>{Math.round(Math.min(100, (m.current / m.target) * 100))}%</span>
+                  </div>
+                </div>
+              ))}
+            </section>
+
+            <section>
+              <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-indigo-600" /> Historical Performance
+              </h3>
+              <div className="grid grid-cols-1 gap-4">
+                <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center justify-between">
+                   <div className="flex items-center gap-4">
+                     <div className="p-3 bg-indigo-50 rounded-2xl"><Brain className="w-6 h-6 text-indigo-600" /></div>
+                     <div>
+                       <p className="text-sm font-bold text-gray-900">Spatial Span</p>
+                       <p className="text-xs text-gray-400">Memory Grid Peak</p>
+                     </div>
+                   </div>
+                   <div className="text-right">
+                     <p className="text-xl font-black text-indigo-600">{stats.memoryBestLevel} Tiles</p>
+                   </div>
+                </div>
+
+                <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center justify-between">
+                   <div className="flex items-center gap-4">
+                     <div className="p-3 bg-pink-50 rounded-2xl"><Zap className="w-6 h-6 text-pink-600" /></div>
+                     <div>
+                       <p className="text-sm font-bold text-gray-900">Processing Yield</p>
+                       <p className="text-xs text-gray-400">Total Finds / 60s</p>
+                     </div>
+                   </div>
+                   <div className="text-right">
+                     {/* Fix: stats.processingBestTime changed to stats.processingBestCount */}
+                     <p className="text-xl font-black text-pink-600">{stats.processingBestCount || '--'}</p>
+                   </div>
+                </div>
+              </div>
+            </section>
+          </>
+        )}
+
+        {activeTab === 'cognition' && (
+          <div className="space-y-6">
+            <section className="bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm">
+              <h3 className="text-lg font-bold text-gray-900 mb-6">Spatial Span Progression</h3>
+              <div className="h-[200px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={stats.memoryHistory}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                    <XAxis dataKey="date" hide />
+                    <YAxis domain={['auto', 'auto']} />
+                    <Tooltip 
+                      contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                      labelFormatter={() => "Tiles Remembered"}
+                    />
+                    <Line type="monotone" dataKey="value" stroke="#6366f1" strokeWidth={4} dot={{ fill: '#6366f1', r: 4 }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </section>
+            
+            <section className="bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm">
+              <h3 className="text-lg font-bold text-gray-900 mb-6">Processing Speed (60s)</h3>
+              <div className="h-[200px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={stats.processingHistory}>
+                    <XAxis dataKey="date" hide />
+                    <YAxis />
+                    <Bar dataKey="value" fill="#10b981" radius={[8, 8, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </section>
+          </div>
+        )}
+
+        {/* ... Other tabs updated to remove XP references ... */}
+        {activeTab === 'regulation' && (
+          <section className="bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm">
+            <h3 className="text-lg font-bold text-gray-900 mb-6">Regulation Fidelity</h3>
+            <div className="h-[200px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={stats.breathingHistory}>
+                  <XAxis dataKey="date" hide />
+                  <Bar dataKey="value" fill="#ec4899" radius={[8, 8, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </section>
+        )}
+
+        {activeTab === 'leisure' && (
+          <div className="space-y-4">
+             <h3 className="text-lg font-bold text-gray-900">Interest Evaluations</h3>
+             {leisureActivities.map(activity => (
+               <div key={activity.id} className="bg-white p-6 rounded-3xl border border-gray-100">
+                 <div className="flex justify-between items-center">
+                    <span className="font-bold">{activity.name}</span>
+                    <div className="flex gap-1">
+                        {[1, 2, 3, 4, 5].map(s => (
+                          <Star key={s} className={`w-4 h-4 ${s <= (activity.rating || 0) ? 'fill-amber-400 text-amber-400' : 'text-gray-200'}`} />
+                        ))}
+                    </div>
+                 </div>
+               </div>
+             ))}
+          </div>
+        )}
+      </main>
+    </div>
+  );
+};
+
+
+
+const App: React.FC = () => {
+  const [userState, setUserState] = useState<MOHOState | null>(null);
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [activeScreen, setActiveScreen] = useState<'dashboard' | 'cognitive' | 'regulation' | 'leisure' | 'edit-hour' | 'pmr-video' | 'therapy-hub' | 'rate-activity'>('dashboard');
+  const [selectedHour, setSelectedHour] = useState<number | null>(null);
+  const [activityToRate, setActivityToRate] = useState<string | null>(null);
+
+  const [stats, setStats] = useState<TherapyStats>(DEFAULT_STATS);
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  const [newActName, setNewActName] = useState("");
+  const [newActType, setNewActType] = useState<Activity['type']>('ADL');
+  const [newActDesc, setNewActDesc] = useState("");
+  const [newActSubType, setNewActSubType] = useState("");
+
+  const CATEGORY_COLORS: Record<Activity['type'], { border: string, bg: string, text: string, icon: string }> = {
+    ADL: { border: 'border-amber-600', bg: 'bg-amber-50', text: 'text-amber-700', icon: 'text-amber-500' },
+    Cognitive: { border: 'border-indigo-600', bg: 'bg-indigo-50', text: 'text-indigo-700', icon: 'text-indigo-500' },
+    Regulation: { border: 'border-pink-600', bg: 'bg-pink-50', text: 'text-pink-700', icon: 'text-pink-500' },
+    Productivity: { border: 'border-purple-600', bg: 'bg-purple-50', text: 'text-purple-700', icon: 'text-purple-500' },
+    Leisure: { border: 'border-emerald-600', bg: 'bg-emerald-50', text: 'text-emerald-700', icon: 'text-emerald-500' },
+    Sleep: { border: 'border-blue-600', bg: 'bg-blue-50', text: 'text-blue-700', icon: 'text-blue-500' },
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const hydrate = async () => {
+      const saved = await loadPersistedState();
+      if (cancelled) return;
+
+      if (saved) {
+        setUserState(saved.userState ?? null);
+        setActivities(Array.isArray(saved.activities) ? saved.activities : []);
+        setStats(saved.stats ? { ...DEFAULT_STATS, ...saved.stats } : DEFAULT_STATS);
+      }
+
+      setIsHydrated(true);
+    };
+
+    void hydrate();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isHydrated) return;
+
+    void savePersistedState({
+      userState,
+      activities,
+      stats
+    });
+  }, [isHydrated, userState, activities, stats]);
+
+  const handleOnboarding = (data: MOHOState) => {
+    setUserState(data);
+    setActivities([]);
+  };
+
+  const removeActivity = (id: string) => {
+    if (window.confirm("Caution: Routine disruption ahead. Continue?")) {
+      setActivities(prev => prev.filter(a => a.id !== id));
+      setActiveScreen('dashboard');
+    }
+  };
+
+  const rateActivity = (id: string, rating: number) => {
+    setActivities(prev => prev.map(a => a.id === id ? { ...a, rating } : a));
+    setActivityToRate(null);
+    setActiveScreen('dashboard');
+  };
+
+  const handleCogComplete = (type: 'memory' | 'processing' | 'tower', score: number) => {
+    setStats(prev => {
+      const today = new Date().toLocaleDateString();
+      if (type === 'memory') {
+        const best = Math.max(prev.memoryBestLevel, score);
+        return {
+          ...prev,
+          memoryBestLevel: best,
+          memoryHistory: [...prev.memoryHistory, { date: today, value: score }]
+        };
+      } else if (type === 'processing') {
+        const best = Math.max(prev.processingBestCount, score);
+        return {
+          ...prev,
+          processingBestCount: best,
+          processingHistory: [...prev.processingHistory, { date: today, value: score }]
+        };
+      } else {
+        const best = prev.towerBestScore === null ? score : Math.min(prev.towerBestScore, score);
+        return {
+          ...prev,
+          towerBestScore: best,
+          towerHistory: [...prev.towerHistory, { date: today, value: score }]
+        };
+      }
+    });
+  };
+
+  const handleSaveActivity = () => {
+    if ((!newActName.trim() && !newActSubType) || selectedHour === null) return;
+    const finalName = newActName.trim() || newActSubType;
+    const newActivity: Activity = {
+      id: Math.random().toString(36).substr(2, 9),
+      name: finalName,
+      type: newActType,
+      startTime: selectedHour,
+      duration: 1,
+      description: newActDesc,
+      isCompleted: false,
+      isStarted: false,
+      subType: newActSubType
+    };
+    setActivities(prev => [...prev.filter(a => a.startTime !== selectedHour), newActivity]);
+    setActiveScreen('dashboard');
+    setNewActName("");
+  };
+
+  const getHourLabel = (h: number) => {
+    const isHalf = h % 1 !== 0;
+    const hour = Math.floor(h);
+    const suffix = isHalf ? ':30' : ':00';
+    if (hour === 0) return `12${suffix}am`;
+    if (hour === 12) return `12${suffix}pm`;
+    return hour > 12 ? `${hour - 12}${suffix}pm` : `${hour}${suffix}am`;
+  };
+
+  const handleActivityAccess = (activity: Activity) => {
+    if (activity.type === 'Cognitive') {
+      setActiveScreen('cognitive');
+    } else if (activity.type === 'Regulation' && activity.name.toLowerCase().includes('pmr')) {
+      setActiveScreen('pmr-video');
+    } else if (activity.type === 'Leisure') {
+      if (!activity.isStarted) {
+        setActivityToRate(activity.id); 
+        setActiveScreen('leisure');
+      } else if (!activity.isCompleted) {
+        setActivities(prev => prev.map(a => a.id === activity.id ? { ...a, isCompleted: true } : a));
+        setActivityToRate(activity.id);
+        setActiveScreen('rate-activity');
+      }
+    } else {
+      if (!activity.isCompleted) {
+        setActivities(prev => prev.map(a => a.id === activity.id ? { ...a, isCompleted: true } : a));
+      }
+    }
+  };
+
+  const handleHobbySelected = (hobbyName: string) => {
+    if (activityToRate) {
+      setActivities(prev => prev.map(a => a.id === activityToRate ? { ...a, name: hobbyName, isStarted: true, selectedHobby: hobbyName } : a));
+      setActivityToRate(null);
+      setActiveScreen('dashboard');
+      setStats(s => ({ ...s, hobbiesExplored: s.hobbiesExplored + 1 }));
+    }
+  };
+
+  if (!isHydrated) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <p className="text-sm font-semibold text-slate-500">Loading saved data...</p>
+      </div>
+    );
+  }
+
+  if (!userState) return <MOHOOnboarding onComplete={handleOnboarding} />;
+
+  if (activeScreen === 'therapy-hub') return <TherapyHub stats={stats} activities={activities} onBack={() => setActiveScreen('dashboard')} onRateActivity={rateActivity} />;
+  if (activeScreen === 'cognitive') return <CognitiveGame stats={stats} onBack={() => setActiveScreen('dashboard')} onComplete={handleCogComplete} />;
+  
+  if (activeScreen === 'leisure') return (
+    <LeisureSwiper 
+      mode={userState.mode} 
+      onBack={() => setActiveScreen('dashboard')} 
+      onSelectHobby={handleHobbySelected} 
+    />
+  );
+
+  if (activeScreen === 'rate-activity') {
+    const act = activities.find(a => a.id === activityToRate);
+    return (
+      <div className="min-h-screen bg-white flex flex-col p-8 max-w-md mx-auto items-center justify-center text-center">
+        <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 mb-6">
+          <CheckCircle2 size={40} />
+        </div>
+        <h2 className="text-2xl font-black text-gray-900 mb-2">Well Done!</h2>
+        <p className="text-gray-500 mb-10">How much did you enjoy <span className="text-emerald-600 font-bold">{act?.name}</span>?</p>
+        
+        <div className="flex gap-2 mb-12">
+          {[1, 2, 3, 4, 5].map(star => (
+            <button 
+              key={star} 
+              onClick={() => rateActivity(activityToRate!, star)}
+              className="p-2 transition-transform active:scale-90"
+            >
+              <Star 
+                size={40} 
+                className={`transition-colors text-gray-200 fill-current`} 
+                style={{ color: '#f59e0b' }} 
+                fill={star <= (act?.rating || 0) ? '#f59e0b' : 'none'}
+                stroke={star <= (act?.rating || 0) ? '#f59e0b' : '#e2e8f0'}
+              />
+            </button>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-5 gap-2 w-full">
+          {[1, 2, 3, 4, 5].map(val => (
+            <button 
+              key={val}
+              onClick={() => rateActivity(activityToRate!, val)}
+              className="py-4 bg-slate-50 border border-slate-100 rounded-2xl font-bold text-gray-900 hover:bg-indigo-600 hover:text-white transition-all"
+            >
+              {val}
+            </button>
+          ))}
+        </div>
+        <p className="text-[10px] font-bold text-gray-400 uppercase mt-4 tracking-widest">Likert Scale: 1 (Lowest) to 5 (Highest)</p>
+      </div>
+    );
+  }
+
+  if (activeScreen === 'pmr-video') {
+    return (
+      <div className="min-h-screen bg-black flex flex-col p-6 max-w-md mx-auto">
+        <div className="flex items-center justify-between mb-8 text-white">
+          <button onClick={() => setActiveScreen('dashboard')} className="p-2"><ChevronLeft /></button>
+          <h2 className="font-bold">Regulation Session</h2>
+          <div className="w-10" />
+        </div>
+        <div className="flex-1 flex items-center justify-center">
+          <iframe width="100%" height="315" src="https://www.youtube.com/embed/t1rRo6cgM_E" title="PMR Exercise" frameBorder="0" allowFullScreen className="rounded-2xl shadow-2xl"></iframe>
+        </div>
+        <button onClick={() => { setStats(s => ({ ...s, breathingSessions: s.breathingSessions + 1 })); setActiveScreen('dashboard'); }} className="bg-white text-black py-4 rounded-2xl font-bold mt-8">Complete</button>
+      </div>
+    );
+  }
+
+  if (activeScreen === 'edit-hour' && selectedHour !== null) {
+    const activityAtHour = activities.find(a => Math.floor(a.startTime) === selectedHour);
+    const subCategories: Record<Activity['type'], string[]> = {
+      ADL: ['Meal time', 'Meds time', 'Shower', 'Exercise'],
+      Cognitive: ['Processing Speed', 'Spatial Memory'],
+      Regulation: ['Guided Imagery', 'PMR'],
+      Productivity: ['Work Task', 'Volunteer', 'Errands'],
+      Leisure: ['Leisure Block'],
+      Sleep: ['Deep Sleep', 'Nap', 'Rest']
+    };
+
+    return (
+      <div className="min-h-screen bg-slate-50 p-6 max-w-md mx-auto flex flex-col">
+        <div className="flex items-center justify-between mb-6">
+          <button onClick={() => setActiveScreen('dashboard')} className="p-2 bg-white rounded-full shadow-sm"><X className="text-gray-400" /></button>
+          <h2 className="text-xl font-bold text-gray-900">Slot: {getHourLabel(selectedHour)}</h2>
+          <div className="w-10" />
+        </div>
+        <div className="space-y-6 flex-1 overflow-y-auto pb-12 pr-2 hide-scrollbar">
+          {activityAtHour ? (
+            <div className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-gray-100">
+               <h3 className="text-lg font-bold text-gray-900 mb-2">{activityAtHour.name}</h3>
+               <button onClick={() => removeActivity(activityAtHour.id)} className="w-full py-4 bg-red-50 text-red-600 rounded-2xl font-bold flex items-center justify-center gap-2 transition-colors hover:bg-red-100"><Trash2 className="w-5 h-5" /> Remove</button>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              <section>
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Select Category</h3>
+                <div className="grid grid-cols-2 gap-2">
+                  {Object.keys(subCategories).map(typeKey => {
+                    const type = typeKey as Activity['type'];
+                    const isSelected = newActType === type;
+                    const style = CATEGORY_COLORS[type];
+                    return (
+                      <button key={type} onClick={() => { setNewActType(type); setNewActSubType(""); }} className={`p-3 rounded-xl border-2 text-sm font-bold transition-all ${isSelected ? `${style.border} ${style.bg} ${style.text}` : 'border-white bg-white text-gray-500'}`}>
+                        {type}
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+              <section>
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Activity Specifics</h3>
+                <div className="flex flex-wrap gap-2">
+                  {subCategories[newActType].map(sub => (
+                    <button key={sub} onClick={() => setNewActSubType(sub)} className={`px-4 py-2 rounded-full border text-xs font-medium transition-all ${newActSubType === sub ? `${CATEGORY_COLORS[newActType].bg} ${CATEGORY_COLORS[newActType].text} ${CATEGORY_COLORS[newActType].border}` : 'bg-white text-gray-600 border-gray-200'}`}>
+                      {sub}
+                    </button>
+                  ))}
+                </div>
+              </section>
+              <button disabled={!newActSubType} onClick={handleSaveActivity} className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-bold shadow-lg shadow-indigo-100 disabled:opacity-50 transition-all hover:scale-[1.02]">
+                <Save className="w-5 h-5 mr-2 inline" /> Schedule Task
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-50 flex flex-col max-w-md mx-auto relative shadow-2xl overflow-hidden">
+      <header className="px-6 pt-10 pb-6 bg-white border-b border-gray-100 flex items-center justify-between sticky top-0 z-20">
+        <div>
+          <h2 className="text-xs font-medium text-gray-400 uppercase tracking-tighter">Otto Therapy Assistant</h2>
+          <h1 className="text-2xl font-bold text-gray-900">{userState.name}</h1>
+        </div>
+        <div className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${userState.mode === AppMode.INPATIENT ? 'bg-orange-100 text-orange-600' : 'bg-green-100 text-green-600'}`}>
+          {userState.mode}
+        </div>
+      </header>
+      <main className="flex-1 overflow-y-auto px-6 py-6 hide-scrollbar pb-32">
+        <HabituationWheel activities={activities} onHourClick={(h) => { setSelectedHour(h); setActiveScreen('edit-hour'); }} />
+        <section className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-bold text-gray-900">Performance Snapshot</h3>
+            <button onClick={() => setActiveScreen('therapy-hub')} className="text-xs font-bold text-indigo-600 flex items-center gap-1">Analytics <TrendingUp size={12} /></button>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm cursor-pointer" onClick={() => setActiveScreen('therapy-hub')}>
+              <Brain className="w-4 h-4 text-indigo-600 mb-1" />
+              <p className="text-[9px] font-bold text-gray-400 uppercase">Memory</p>
+              <p className="text-[11px] font-bold text-gray-900">Lvl {stats.memoryBestLevel}</p>
+            </div>
+            <div className="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm cursor-pointer" onClick={() => setActiveScreen('therapy-hub')}>
+              <Zap className="w-4 h-4 text-pink-500 mb-1" />
+              <p className="text-[9px] font-bold text-gray-400 uppercase">Speed</p>
+              <p className="text-[11px] font-bold text-gray-900">{stats.processingBestCount || '--'}</p>
+            </div>
+            <div className="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm cursor-pointer" onClick={() => setActiveScreen('therapy-hub')}>
+              <Heart className="w-4 h-4 text-emerald-500 mb-1" />
+              <p className="text-[9px] font-bold text-gray-400 uppercase">Streak</p>
+              <p className="text-[11px] font-bold text-gray-900">{stats.streak}d</p>
+            </div>
+          </div>
+        </section>
+        <section className="space-y-3">
+          {activities.length === 0 ? (
+             <div className="text-center py-12 bg-white border-2 border-dashed border-gray-100 rounded-[2.5rem]">
+               <PlusCircle className="w-10 h-10 text-gray-200 mx-auto mb-3" />
+               <p className="text-sm font-medium text-gray-400">Routine Empty</p>
+             </div>
+          ) : activities.sort((a,b) => a.startTime - b.startTime).map(activity => (
+            <div key={activity.id} className="group bg-white p-4 rounded-[2rem] flex flex-col border border-gray-100 shadow-sm">
+              <div className="flex items-center gap-4">
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${activity.isCompleted ? 'bg-indigo-600 text-white' : 'bg-slate-50 text-slate-400'}`}>
+                  {activity.type === 'Cognitive' && <Brain size={20} />}
+                  {activity.type === 'Regulation' && <Zap size={20} />}
+                  {activity.type === 'Leisure' && <Heart size={20} />}
+                  {activity.type === 'ADL' && <PlusCircle size={20} />}
+                  {activity.type === 'Sleep' && <Moon size={20} />}
+                  {activity.type === 'Productivity' && <Clock size={20} />}
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-bold text-gray-900 text-sm leading-tight">{activity.name}</h4>
+                  <div className="flex gap-2 mt-1">
+                    <p className="text-[10px] text-indigo-600 font-bold bg-indigo-50 inline-block px-2 py-0.5 rounded-full">{getHourLabel(activity.startTime)}</p>
+                    {activity.type === 'Leisure' && activity.rating && (
+                      <div className="flex gap-0.5 items-center">
+                        <Star size={10} className="fill-amber-400 text-amber-400" />
+                        <span className="text-[10px] font-bold text-amber-600">{activity.rating}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="flex gap-2 mt-4">
+                <button 
+                  onClick={() => handleActivityAccess(activity)} 
+                  className={`flex-1 py-3 rounded-2xl text-xs font-bold transition-all ${
+                    activity.isCompleted 
+                      ? 'bg-emerald-50 text-emerald-600' 
+                      : activity.type === 'Leisure' && !activity.isStarted 
+                        ? 'bg-indigo-600 text-white' 
+                        : 'bg-indigo-600 text-white'
+                  }`}
+                >
+                  {activity.isCompleted ? 'Finished' : (
+                    activity.type === 'Leisure' 
+                    ? (!activity.isStarted ? 'Select Activity' : 'Complete Activity') 
+                    : 'Perform Activity'
+                  )}
+                </button>
+                <button onClick={() => removeActivity(activity.id)} className="p-3 text-slate-200"><Trash2 size={18} /></button>
+              </div>
+            </div>
+          ))}
+        </section>
+      </main>
+      <div className="fixed bottom-0 left-0 right-0 p-6 z-30 flex justify-center max-w-md mx-auto pointer-events-none">
+        <div onClick={() => setActiveScreen('therapy-hub')} className="bg-indigo-900 text-white w-full py-5 px-8 rounded-[2.5rem] shadow-2xl flex items-center justify-between border border-white/10 pointer-events-auto cursor-pointer">
+          <div className="flex items-center gap-4">
+             <Trophy className="w-5 h-5 text-indigo-300" />
+             <div><p className="text-[10px] font-bold text-indigo-300 uppercase tracking-widest">Habit Mastery</p><p className="text-sm font-bold">Goal: 7 Day Streak</p></div>
+          </div>
+          <ArrowRight className="w-5 h-5 text-indigo-300" />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
+const rootElement = document.getElementById("root");
+if (!rootElement) {
+  throw new Error("Could not find root element to mount to");
+}
+
+const root = ReactDOM.createRoot(rootElement);
+root.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
+  </script>
+  <script type="module">
+    const sourceBlock = document.getElementById('app-tsx');
+    if (!sourceBlock) {
+      throw new Error('Missing app source block.');
+    }
+
+    const babelRuntime = window.Babel;
+    if (!babelRuntime) {
+      throw new Error('Babel runtime failed to load.');
+    }
+
+    const transformed = babelRuntime.transform(sourceBlock.textContent || '', {
+      presets: ['typescript', 'react'],
+      sourceType: 'module',
+      filename: 'app.tsx'
+    }).code;
+
+    const blob = new Blob([transformed], { type: 'text/javascript' });
+    const blobUrl = URL.createObjectURL(blob);
+
+    try {
+      await import(blobUrl);
+    } finally {
+      URL.revokeObjectURL(blobUrl);
+    }
+  </script>
 </body>
 </html>
